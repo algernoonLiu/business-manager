@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/rabbit
+       http://www.springframework.org/schema/rabbit/spring-rabbit.xsd
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- 定义rabbitmq 连接工厂 -->
+    <rabbit:connection-factory id="connectionFactory" host="127.0.0.1" port="5672"
+        virtual-host="/vhost_rabbitmq_123" username="rabbitmq" password="123"/>
+
+    <!-- 定义Rabbit模板，指定连接工厂及交换机 -->
+    <rabbit:template id="rabbitTemplate" connection-factory="connectionFactory" exchange="fanoutExchange"/>
+
+    <!-- RabbitMQ 管理 包括队列/交换器声明等 -->
+    <rabbit:admin connection-factory="connectionFactory"/>
+
+    <!-- 定义队列，自动声明 -->
+    <rabbit:queue name="spring_queue" auto-declare="true" durable="true"/>
+
+    <!-- 定义交换器，自动声明 绑定队列 -->
+    <rabbit:fanout-exchange name="fanoutExchange" auto-declare="true">
+        <rabbit:bindings>
+            <rabbit:binding queue="spring_queue"/>
+        </rabbit:bindings>
+    </rabbit:fanout-exchange>
+
+    <rabbit:listener-container connection-factory="connectionFactory">
+        <rabbit:listener ref="consumer" method="listen" queue-names="spring_queue"/>
+    </rabbit:listener-container>
+
+    <bean id="consumer" class="com.gary.businessmanager.rabbitmq.spring.Consumer"/>
+</beans>
